@@ -47,36 +47,31 @@
       
       const distance = p1.distanceTo(p2);
 
-      // Distance threshold: ~3cm
       if (distance < 2.5) { 
         stair.setAttribute('visible', 'true');
-        
-        // Hide the debug boxes
         box1.setAttribute('visible', 'false');
         box2.setAttribute('visible', 'false');
         
-        // Midpoint
         stair.object3D.position.set(
           (p1.x + p2.x) / 2,
           (p1.y + p2.y) / 2,
           (p1.z + p2.z) / 2
         );
 
-        // --- STABLE ROTATION LOGIC ---
-        // We create a vector pointing from marker 2 to marker 1
+        // Calculate direction between markers
         let direction = new THREE.Vector3().subVectors(p1, p2);
-        // We ignore the height (Y) so it doesn't flip or tilt
         direction.y = 0; 
         
-        // Create the orientation based on that flat direction
-        let targetRotation = new THREE.Quaternion();
+        // Apply orientation
         let upVector = new THREE.Vector3(0, 1, 0); 
         let matrix = new THREE.Matrix4().lookAt(direction, new THREE.Vector3(0,0,0), upVector);
-        targetRotation.setFromRotationMatrix(matrix);
-        
-        // Apply the rotation
-        stair.object3D.quaternion.copy(targetRotation);
-        // -----------------------------
+        stair.object3D.quaternion.setFromRotationMatrix(matrix);
+
+        // --- THE OFFSET FIX ---
+        // If it's perpendicular, we need to spin it 90 degrees (Math.PI / 2)
+        // Try changing this to -Math.PI / 2 if it flips to the wrong side.
+        stair.object3D.rotateY(Math.PI / 2); 
+        // -----------------------
 
       } else {
         stair.setAttribute('visible', 'false');
@@ -112,7 +107,7 @@
       <a-entity id="stair-model" 
                 gltf-model="url(stair.glb)" 
                 scale="10 10 10" 
-                rotation="90 0 90"
+                rotation="0 0 0"
                 visible="false"
                 architect-filters="color: #DB35CB; opacity: 0.8">
       </a-entity>
