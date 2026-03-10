@@ -47,36 +47,38 @@
       
       const distance = p1.distanceTo(p2);
 
-      // Trigger at ~3cm (Adjust to 3.5 if it's too hard to trigger)
+      // Trigger at ~3cm
       if (distance < 2.5) { 
         stair.setAttribute('visible', 'true');
-        if(box1) box1.setAttribute('visible', 'false');
-        if(box2) box2.setAttribute('visible', 'false');
+        box1.setAttribute('visible', 'false');
+        box2.setAttribute('visible', 'false');
         
-        // 1. Position at midpoint
+        // Midpoint positioning
         stair.object3D.position.set(
           (p1.x + p2.x) / 2,
           (p1.y + p2.y) / 2,
           (p1.z + p2.z) / 2
         );
 
-        // 2. Clear previous rotation to prevent "spinning out of control"
-        stair.object3D.rotation.set(0, 0, 0);
+        // 1. Point the object toward the other marker
+        let direction = new THREE.Vector3().subVectors(p1, p2);
+        direction.y = 0; 
+        let upVector = new THREE.Vector3(0, 1, 0); 
+        let matrix = new THREE.Matrix4().lookAt(direction, new THREE.Vector3(0,0,0), upVector);
+        stair.object3D.quaternion.setFromRotationMatrix(matrix);
 
-        // 3. Orient towards Marker 1
-        stair.object3D.lookAt(p1);
-
-        // 4. Apply the X-axis tilt you mentioned
-        // Math.PI / 2 is 90 degrees. 
+        // 2. THE X-AXIS FIX
+        // This tilts the model 90 degrees to lay it flat or stand it up
         stair.object3D.rotateX(Math.PI / 2); 
 
-        // 5. If it's perpendicular, add this Y-rotation:
-        // stair.object3D.rotateY(Math.PI / 2);
+        // 3. OPTIONAL Y-AXIS ADJUSTMENT
+        // If it's flat but facing the "wrong" marker, uncomment the line below:
+        // stair.object3D.rotateY(Math.PI / 2); 
 
       } else {
         stair.setAttribute('visible', 'false');
-        if(box1) box1.setAttribute('visible', 'true');
-        if(box2) box2.setAttribute('visible', 'true');
+        box1.setAttribute('visible', 'true');
+        box2.setAttribute('visible', 'true');
       }
     } else {
       stair.setAttribute('visible', 'false');
