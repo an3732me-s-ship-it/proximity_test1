@@ -55,7 +55,7 @@
 
       // We use a very large threshold (20) just to verify it WORKS first.
       // If it works now, you can lower this number later for precision.
-      if (distance < 20.0) { 
+      if (distance < 5) { 
         stair.setAttribute('visible', 'true');
         
         // Midpoint calculation
@@ -100,6 +100,7 @@
       <a-entity id="stair-model" 
                 gltf-model="url(stair.glb)" 
                 scale="10 10 10" 
+                rotation="90 0 0"
                 visible="false"
                 architect-filters="color: #DB35CB; opacity: 0.8">
       </a-entity>
