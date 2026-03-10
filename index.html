@@ -1,48 +1,48 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>AR Proximity Trigger - Stairs</title>
+    <title>AR Proximity - Scale 10</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     
     <script>
-      // COMPONENT 1: Force the .glb model to be #DB35CB pink
-      AFRAME.registerComponent('force-color', {
+      // Force the pink color onto the GLB mesh
+      AFRAME.registerComponent('pink-shader', {
         init: function () {
           this.el.addEventListener('model-loaded', () => {
             const obj = this.el.getObject3D('mesh');
             obj.traverse(node => {
               if (node.isMesh) {
-                // Apply the specific pink color to the material
                 node.material.color.set('#DB35CB');
+                node.material.opacity = 0.8;
+                node.material.transparent = true;
               }
             });
           });
         }
       });
 
-      // COMPONENT 2: Logic for Proximity and Midpoint Positioning
       AFRAME.registerComponent('proximity-handler', {
         tick: function () {
-          const m1 = document.querySelector('#marker1');
-          const m2 = document.querySelector('#marker2');
+          const m1 = document.querySelector('#marker1').object3D;
+          const m2 = document.querySelector('#marker2').object3D;
           const stair = document.querySelector('#stair-model');
 
-          if (m1 && m2 && m1.visible && m2.visible) {
-            const p1 = m1.object3D.position;
-            const p2 = m2.object3D.position;
+          // We use getWorldPosition to find where they are in the actual room
+          var p1 = new THREE.Vector3();
+          var p2 = new THREE.Vector3();
+          
+          if (document.querySelector('#marker1').visible && document.querySelector('#marker2').visible) {
+            m1.getWorldPosition(p1);
+            m2.getWorldPosition(p2);
             
-            // Calculate distance between markers
             const distance = p1.distanceTo(p2);
 
-            // Set threshold (increased to 8.0 because of the scale 5 objects)
-            if (distance < 8.0) { 
+            // With 5cm markers and scale 10, a distance of 4.0 to 6.0 is a good "close" range
+            if (distance < 6.0) { 
               stair.setAttribute('visible', 'true');
-              
-              // Place stairs exactly in the middle of the two markers
+              // Place exactly between markers
               stair.object3D.position.lerpVectors(p1, p2, 0.5);
-              
-              // Make stairs align with the direction between markers
               stair.object3D.lookAt(p1);
             } else {
               stair.setAttribute('visible', 'false');
@@ -56,32 +56,25 @@
   </head>
 
   <body style="margin: 0px; overflow: hidden;">
-    <a-scene 
-      embedded 
-      arjs="sourceType: webcam; debugUIEnabled: false;" 
-      proximity-handler>
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" proximity-handler>
       
       <a-assets>
-        <a-asset-item id="stair-obj" src="stair.glb"></a-asset-item>
+        <a-asset-item id="stair-glb" src="https://raw.githubusercontent.com/an3732me-s-ship-it/6_test/refs/heads/main/models/stair.glb"></a-asset-item>
       </a-assets>
 
-      <a-marker id="marker1" type="pattern" url="pattern-connect.patt">
-        <a-box position="0 2.5 0" scale="5 5 5" 
-               material="wireframe: true; color: #4CC3D9; opacity: 0.5;">
-        </a-box>
+      <a-marker id="marker1" type="pattern" url="https://raw.githubusercontent.com/an3732me-s-ship-it/6_test/refs/heads/main/patterns/pattern-connect.patt">
+        <a-box position="0 0.5 0" scale="1 1 1" material="color: #4CC3D9; opacity: 0.5"></a-box>
       </a-marker>
 
-      <a-marker id="marker2" type="pattern" url="pattern-connect2.patt">
-        <a-box position="0 2.5 0" scale="5 5 5" 
-               material="wireframe: true; color: #EF2D5E; opacity: 0.5;">
-        </a-box>
+      <a-marker id="marker2" type="pattern" url="https://raw.githubusercontent.com/an3732me-s-ship-it/6_test/refs/heads/main/patterns/pattern-connect2.patt">
+        <a-box position="0 0.5 0" scale="1 1 1" material="color: #EF2D5E; opacity: 0.5"></a-box>
       </a-marker>
 
       <a-entity id="stair-model" 
-                gltf-model="#stair-obj" 
-                scale="5 5 5" 
+                gltf-model="#stair-glb" 
+                scale="10 10 10" 
                 visible="false"
-                force-color>
+                pink-shader>
       </a-entity>
 
       <a-entity camera></a-entity>
