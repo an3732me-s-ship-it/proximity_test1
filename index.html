@@ -5,7 +5,6 @@
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
     <script>
-      // Your working material component
       AFRAME.registerComponent('architect-filters', {
         schema: {
           color: {type: 'color', default: '#ffffff'},
@@ -20,8 +19,6 @@
                 node.material.transparent = true;
                 node.material.opacity = this.data.opacity;
                 node.material.color.set(this.data.color);
-                node.material.roughness = 0.7; 
-                node.material.metalness = 0.2;
               }
             });
           });
@@ -29,82 +26,74 @@
       });
 
       AFRAME.registerComponent('proximity-handler', {
-  tick: function () {
-    const m1 = document.querySelector('#marker1');
-    const m2 = document.querySelector('#marker2');
-    const box1 = m1.querySelector('a-box');
-    const box2 = m2.querySelector('a-box');
-    const stair = document.querySelector('#stair-model');
+        tick: function () {
+          const m1 = document.querySelector('#marker1');
+          const m2 = document.querySelector('#marker2');
+          const box1 = m1.querySelector('a-box');
+          const box2 = m2.querySelector('a-box');
+          const stair = document.querySelector('#stair-model');
 
-    if (m1 && m2 && m1.object3D.visible && m2.object3D.visible) {
-      m1.object3D.updateMatrixWorld();
-      m2.object3D.updateMatrixWorld();
+          if (m1 && m2 && m1.object3D.visible && m2.object3D.visible) {
+            m1.object3D.updateMatrixWorld();
+            m2.object3D.updateMatrixWorld();
 
-      let p1 = new THREE.Vector3();
-      let p2 = new THREE.Vector3();
-      m1.object3D.getWorldPosition(p1);
-      m2.object3D.getWorldPosition(p2);
-      
-      const distance = p1.distanceTo(p2);
+            let p1 = new THREE.Vector3();
+            let p2 = new THREE.Vector3();
+            m1.object3D.getWorldPosition(p1);
+            m2.object3D.getWorldPosition(p2);
+            
+            const distance = p1.distanceTo(p2);
 
-      // Trigger at ~3cm
-      if (distance < 2.5) { 
-        stair.setAttribute('visible', 'true');
-        if(box1) box1.setAttribute('visible', 'false');
-        if(box2) box2.setAttribute('visible', 'false');
-        
-        // 1. Position at midpoint
-        stair.object3D.position.set(
-          (p1.x + p2.x) / 2,
-          (p1.y + p2.y) / 2,
-          (p1.z + p2.z) / 2
-        );
+            // 3cm Trigger (Distance 2.5)
+            if (distance < 2.5) { 
+              stair.setAttribute('visible', 'true');
+              box1.setAttribute('visible', 'false');
+              box2.setAttribute('visible', 'false');
+              
+              // Position at Midpoint
+              stair.object3D.position.set(
+                (p1.x + p2.x) / 2,
+                (p1.y + p2.y) / 2,
+                (p1.z + p2.z) / 2
+              );
 
-        // 2. Calculate the "Compass Heading" (Rotation around Y)
-        // This calculates the angle between the two markers on the flat plane
-        let angle = Math.atan2(p1.x - p2.x, p1.z - p2.z);
+              // STABLE ROTATION MATH
+              // We calculate the angle on the flat paper (X and Z)
+              let angle = Math.atan2(p1.x - p2.x, p1.z - p2.z);
 
-        // 3. HARD-LOCK THE AXES
-        // rotation.set(X, Y, Z)
-        // 1.5708 radians is exactly 90 degrees.
-        // This forces the stairs to stay on their base (X) and never tilt (Z).
-        stair.object3D.rotation.set(1.5708, angle, 0);
+              // We FORCE the orientation. 
+              // 1.57 (90 deg) on X makes it stand up.
+              // 'angle' on Y makes it point at the other marker.
+              // 0 on Z makes it impossible to "roll" onto its side.
+              stair.object3D.rotation.set(1.57, angle, 0);
 
-      } else {
-        stair.setAttribute('visible', 'false');
-        if(box1) box1.setAttribute('visible', 'true');
-        if(box2) box2.setAttribute('visible', 'true');
-      }
-    } else {
-      stair.setAttribute('visible', 'false');
-      if(box1) box1.setAttribute('visible', 'true');
-      if(box2) box2.setAttribute('visible', 'true');
-    }
-  }
-});
+            } else {
+              stair.setAttribute('visible', 'false');
+              box1.setAttribute('visible', 'true');
+              box2.setAttribute('visible', 'true');
+            }
+          } else {
+            stair.setAttribute('visible', 'false');
+          }
+        }
+      });
     </script>
   </head>
 
   <body style="margin: 0px; overflow: hidden;">
-    <a-scene embedded 
-             arjs="sourceType: webcam; debugUIEnabled: false; smooth: true; smoothCount: 10; patternRatio: 0.7;"
-             proximity-handler>
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" proximity-handler>
       
-      <a-entity light="type: ambient; intensity: 0.7; color: #ffffff;"></a-entity>
-      <a-entity light="type: directional; intensity: 1.0;" position="1 4 2"></a-entity>
-
       <a-marker id="marker1" type="pattern" url="pattern-connect.patt">
-        <a-box position="0 0.5 0" scale="1 1 1" material="color: #DB35CB; opacity: 0.2; wireframe: true;"></a-box>
+        <a-box scale="1 1 1" material="wireframe: true; color: #DB35CB"></a-box>
       </a-marker>
 
       <a-marker id="marker2" type="pattern" url="pattern-connect2.patt">
-        <a-box position="0 0.5 0" scale="1 1 1" material="color: #DB35CB; opacity: 0.2; wireframe: true;"></a-box>
+        <a-box scale="1 1 1" material="wireframe: true; color: #DB35CB"></a-box>
       </a-marker>
 
       <a-entity id="stair-model" 
                 gltf-model="url(stair.glb)" 
                 scale="10 10 10" 
-                rotation="0 0 0"
                 visible="false"
                 architect-filters="color: #DB35CB; opacity: 0.8">
       </a-entity>
