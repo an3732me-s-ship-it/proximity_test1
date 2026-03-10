@@ -28,40 +28,56 @@
         }
       });
 
-      // The logic to handle the "Connection"
       AFRAME.registerComponent('proximity-handler', {
-        tick: function () {
-          const m1 = document.querySelector('#marker1');
-          const m2 = document.querySelector('#marker2');
-          const stair = document.querySelector('#stair-model');
+  tick: function () {
+    const m1 = document.querySelector('#marker1');
+    const m2 = document.querySelector('#marker2');
+    const stair = document.querySelector('#stair-model');
 
-          if (m1.visible && m2.visible) {
-            // Get world positions to ensure distance is accurate in the room
-            const p1 = new THREE.Vector3();
-            const p2 = new THREE.Vector3();
-            m1.object3D.getWorldPosition(p1);
-            m2.object3D.getWorldPosition(p2);
-            
-            const distance = p1.distanceTo(p2);
+    // Check if both markers are FOUND by the camera
+    if (m1 && m2 && m1.object3D.visible && m2.object3D.visible) {
+      
+      // Force the matrix to update so positions are fresh
+      m1.object3D.updateMatrixWorld();
+      m2.object3D.updateMatrixWorld();
 
-            // Threshold: If markers are within roughly 10cm of each other
-            // Adjust "3.0" higher if it's too hard to trigger
-            if (distance < 3.0) { 
-              stair.setAttribute('visible', 'true');
-              
-              // Place the stairs at the midpoint
-              stair.object3D.position.lerpVectors(p1, p2, 0.5);
-              
-              // Orient the stairs to align with the connection axis
-              stair.object3D.lookAt(p1);
-            } else {
-              stair.setAttribute('visible', 'false');
-            }
-          } else {
-            stair.setAttribute('visible', 'false');
-          }
-        }
-      });
+      let p1 = new THREE.Vector3();
+      let p2 = new THREE.Vector3();
+      
+      m1.object3D.getWorldPosition(p1);
+      m2.object3D.getWorldPosition(p2);
+      
+      const distance = p1.distanceTo(p2);
+
+      // DEBUG: If you can see your phone/laptop console, 
+      // this tells us the EXACT number to use for the threshold.
+      console.log("Current Distance:", distance);
+
+      // We use a very large threshold (20) just to verify it WORKS first.
+      // If it works now, you can lower this number later for precision.
+      if (distance < 20.0) { 
+        stair.setAttribute('visible', 'true');
+        
+        // Midpoint calculation
+        const midX = (p1.x + p2.x) / 2;
+        const midY = (p1.y + p2.y) / 2;
+        const midZ = (p1.z + p2.z) / 2;
+        
+        // Position the stairs at the midpoint, but slightly ABOVE the markers (y + 2)
+        // so they don't clip through the floor/paper.
+        stair.object3D.position.set(midX, midY + 2, midZ);
+        
+        // Make the stairs face one of the markers
+        stair.object3D.lookAt(p1);
+      } else {
+        stair.setAttribute('visible', 'false');
+      }
+    } else {
+      // If the camera loses even one marker, hide the stairs
+      stair.setAttribute('visible', 'false');
+    }
+  }
+});
     </script>
   </head>
 
