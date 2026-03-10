@@ -28,7 +28,7 @@
         }
       });
 
-      AFRAME.registerComponent('proximity-handler', {
+      AFRAME.registerPosition('proximity-handler', {
   tick: function () {
     const m1 = document.querySelector('#marker1');
     const m2 = document.querySelector('#marker2');
@@ -47,33 +47,30 @@
       
       const distance = p1.distanceTo(p2);
 
-      // Trigger at ~3cm
       if (distance < 2.5) { 
         stair.setAttribute('visible', 'true');
         box1.setAttribute('visible', 'false');
         box2.setAttribute('visible', 'false');
         
-        // Midpoint positioning
+        // 1. Position at midpoint
         stair.object3D.position.set(
           (p1.x + p2.x) / 2,
           (p1.y + p2.y) / 2,
           (p1.z + p2.z) / 2
         );
 
-        // 1. Point the object toward the other marker
-        let direction = new THREE.Vector3().subVectors(p1, p2);
-        direction.y = 0; 
-        let upVector = new THREE.Vector3(0, 1, 0); 
-        let matrix = new THREE.Matrix4().lookAt(direction, new THREE.Vector3(0,0,0), upVector);
-        stair.object3D.quaternion.setFromRotationMatrix(matrix);
+        // 2. Calculate the Angle on the flat plane (XZ)
+        // This finds the angle in radians between the two markers
+        let angle = Math.atan2(p1.x - p2.x, p1.z - p2.z);
 
-        // 2. THE X-AXIS FIX
-        // This tilts the model 90 degrees to lay it flat or stand it up
-        stair.object3D.rotateX(Math.PI / 2); 
-
-        // 3. OPTIONAL Y-AXIS ADJUSTMENT
-        // If it's flat but facing the "wrong" marker, uncomment the line below:
-        // stair.object3D.rotateY(Math.PI / 2); 
+        // 3. Set absolute rotation to prevent flipping
+        // We set Y to the calculated angle, and X to your required 90 degrees.
+        // If it's still "standing up" instead of flat, try changing 1.57 to 0.
+        stair.object3D.rotation.set(
+          1.57,  // This is ~90 degrees in Radians (Math.PI / 2)
+          angle, // The dynamic angle between markers
+          0      // Keep Z locked at 0
+        );
 
       } else {
         stair.setAttribute('visible', 'false');
