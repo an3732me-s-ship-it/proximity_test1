@@ -32,49 +32,61 @@
   tick: function () {
     const m1 = document.querySelector('#marker1');
     const m2 = document.querySelector('#marker2');
+    const box1 = m1.querySelector('a-box');
+    const box2 = m2.querySelector('a-box');
     const stair = document.querySelector('#stair-model');
 
-    // Check if both markers are FOUND by the camera
     if (m1 && m2 && m1.object3D.visible && m2.object3D.visible) {
-      
-      // Force the matrix to update so positions are fresh
       m1.object3D.updateMatrixWorld();
       m2.object3D.updateMatrixWorld();
 
       let p1 = new THREE.Vector3();
       let p2 = new THREE.Vector3();
-      
       m1.object3D.getWorldPosition(p1);
       m2.object3D.getWorldPosition(p2);
       
       const distance = p1.distanceTo(p2);
 
-      // DEBUG: If you can see your phone/laptop console, 
-      // this tells us the EXACT number to use for the threshold.
-      console.log("Current Distance:", distance);
-
-      // We use a very large threshold (20) just to verify it WORKS first.
-      // If it works now, you can lower this number later for precision.
-      if (distance < 2) { 
+      // Distance threshold: ~3cm
+      if (distance < 2.5) { 
         stair.setAttribute('visible', 'true');
         
-        // Midpoint calculation
-        const midX = (p1.x + p2.x) / 2;
-        const midY = (p1.y + p2.y) / 2;
-        const midZ = (p1.z + p2.z) / 2;
+        // Hide the debug boxes
+        box1.setAttribute('visible', 'false');
+        box2.setAttribute('visible', 'false');
         
-        // Position the stairs at the midpoint, but slightly ABOVE the markers (y + 2)
-        // so they don't clip through the floor/paper.
-        stair.object3D.position.set(midX, midY + 2, midZ);
+        // Midpoint
+        stair.object3D.position.set(
+          (p1.x + p2.x) / 2,
+          (p1.y + p2.y) / 2,
+          (p1.z + p2.z) / 2
+        );
+
+        // --- STABLE ROTATION LOGIC ---
+        // We create a vector pointing from marker 2 to marker 1
+        let direction = new THREE.Vector3().subVectors(p1, p2);
+        // We ignore the height (Y) so it doesn't flip or tilt
+        direction.y = 0; 
         
-        // Make the stairs face one of the markers
-        stair.object3D.lookAt(p1);
+        // Create the orientation based on that flat direction
+        let targetRotation = new THREE.Quaternion();
+        let upVector = new THREE.Vector3(0, 1, 0); 
+        let matrix = new THREE.Matrix4().lookAt(direction, new THREE.Vector3(0,0,0), upVector);
+        targetRotation.setFromRotationMatrix(matrix);
+        
+        // Apply the rotation
+        stair.object3D.quaternion.copy(targetRotation);
+        // -----------------------------
+
       } else {
         stair.setAttribute('visible', 'false');
+        box1.setAttribute('visible', 'true');
+        box2.setAttribute('visible', 'true');
       }
     } else {
-      // If the camera loses even one marker, hide the stairs
       stair.setAttribute('visible', 'false');
+      if(box1) box1.setAttribute('visible', 'true');
+      if(box2) box2.setAttribute('visible', 'true');
     }
   }
 });
