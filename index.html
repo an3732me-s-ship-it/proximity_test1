@@ -28,7 +28,7 @@
         }
       });
 
-      AFRAME.registerPosition('proximity-handler', {
+      AFRAME.registerComponent('proximity-handler', {
   tick: function () {
     const m1 = document.querySelector('#marker1');
     const m2 = document.querySelector('#marker2');
@@ -47,10 +47,11 @@
       
       const distance = p1.distanceTo(p2);
 
+      // Trigger at ~3cm (Adjust to 3.5 if it's too hard to trigger)
       if (distance < 2.5) { 
         stair.setAttribute('visible', 'true');
-        box1.setAttribute('visible', 'false');
-        box2.setAttribute('visible', 'false');
+        if(box1) box1.setAttribute('visible', 'false');
+        if(box2) box2.setAttribute('visible', 'false');
         
         // 1. Position at midpoint
         stair.object3D.position.set(
@@ -59,23 +60,23 @@
           (p1.z + p2.z) / 2
         );
 
-        // 2. Calculate the Angle on the flat plane (XZ)
-        // This finds the angle in radians between the two markers
-        let angle = Math.atan2(p1.x - p2.x, p1.z - p2.z);
+        // 2. Clear previous rotation to prevent "spinning out of control"
+        stair.object3D.rotation.set(0, 0, 0);
 
-        // 3. Set absolute rotation to prevent flipping
-        // We set Y to the calculated angle, and X to your required 90 degrees.
-        // If it's still "standing up" instead of flat, try changing 1.57 to 0.
-        stair.object3D.rotation.set(
-          1.57,  // This is ~90 degrees in Radians (Math.PI / 2)
-          angle, // The dynamic angle between markers
-          0      // Keep Z locked at 0
-        );
+        // 3. Orient towards Marker 1
+        stair.object3D.lookAt(p1);
+
+        // 4. Apply the X-axis tilt you mentioned
+        // Math.PI / 2 is 90 degrees. 
+        stair.object3D.rotateX(Math.PI / 2); 
+
+        // 5. If it's perpendicular, add this Y-rotation:
+        // stair.object3D.rotateY(Math.PI / 2);
 
       } else {
         stair.setAttribute('visible', 'false');
-        box1.setAttribute('visible', 'true');
-        box2.setAttribute('visible', 'true');
+        if(box1) box1.setAttribute('visible', 'true');
+        if(box2) box2.setAttribute('visible', 'true');
       }
     } else {
       stair.setAttribute('visible', 'false');
