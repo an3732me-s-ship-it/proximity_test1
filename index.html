@@ -50,35 +50,30 @@
       // Trigger at ~3cm
       if (distance < 2.5) { 
         stair.setAttribute('visible', 'true');
-        box1.setAttribute('visible', 'false');
-        box2.setAttribute('visible', 'false');
+        if(box1) box1.setAttribute('visible', 'false');
+        if(box2) box2.setAttribute('visible', 'false');
         
-        // Midpoint positioning
+        // 1. Position at midpoint
         stair.object3D.position.set(
           (p1.x + p2.x) / 2,
           (p1.y + p2.y) / 2,
           (p1.z + p2.z) / 2
         );
 
-        // 1. Point the object toward the other marker
-        let direction = new THREE.Vector3().subVectors(p1, p2);
-        direction.y = 0; 
-        let upVector = new THREE.Vector3(0, 1, 0); 
-        let matrix = new THREE.Matrix4().lookAt(direction, new THREE.Vector3(0,0,0), upVector);
-        stair.object3D.quaternion.setFromRotationMatrix(matrix);
+        // 2. Calculate the "Compass Heading" (Rotation around Y)
+        // This calculates the angle between the two markers on the flat plane
+        let angle = Math.atan2(p1.x - p2.x, p1.z - p2.z);
 
-        // 2. THE X-AXIS FIX
-        // This tilts the model 90 degrees to lay it flat or stand it up
-        stair.object3D.rotateX(Math.PI / 2); 
-
-        // 3. OPTIONAL Y-AXIS ADJUSTMENT
-        // If it's flat but facing the "wrong" marker, uncomment the line below:
-        // stair.object3D.rotateY(Math.PI / 2); 
+        // 3. HARD-LOCK THE AXES
+        // rotation.set(X, Y, Z)
+        // 1.5708 radians is exactly 90 degrees.
+        // This forces the stairs to stay on their base (X) and never tilt (Z).
+        stair.object3D.rotation.set(1.5708, angle, 0);
 
       } else {
         stair.setAttribute('visible', 'false');
-        box1.setAttribute('visible', 'true');
-        box2.setAttribute('visible', 'true');
+        if(box1) box1.setAttribute('visible', 'true');
+        if(box2) box2.setAttribute('visible', 'true');
       }
     } else {
       stair.setAttribute('visible', 'false');
